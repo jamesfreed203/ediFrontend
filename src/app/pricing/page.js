@@ -1,26 +1,39 @@
-import PricingSection from "../components/pricing/PricingSection";
+import PricingPage from "../page-containers/PricingPage";
+import { apiRoutes, bearerToken } from "../models/commonConstants";
+import axios from "axios";
+
+// Prevent caching in Next.js to always pull fresh data on each request
+export const fetchCache = "only-no-store";
+export const revalidate = 0;
 
 async function getPricingData() {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/pricing`, {
-    cache: 'no-store',
-    next: { revalidate: 3600 }
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch pricing data');
+  try{
+    const response = await axios.get(apiRoutes.getPlansData, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": bearerToken
+      }
+    });
+
+    return response.data;
+  }catch(error){
+    console.error("Error fetching data: ", error);
+    return {data: null};
   }
-  
-  return response.json();
 }
 
-export default async function PlansPage() {
+// Metadata for SEO
+export async function generateMetadata() {
+  return {
+    title: "Pricing Plans | EDI",
+    description: "",
+  };
+};
+
+export default async function Pricing() {
   const pricingData = await getPricingData();
   
   return (
-    <>
-      <main>
-        <PricingSection pricingPlans={pricingData || []} />
-      </main>
-    </>
+    <PricingPage pricingPlans={pricingData?.data || []} />
   );
 }
